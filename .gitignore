@@ -1,0 +1,23 @@
+# Node.js dependencies
+/node_modules
+
+# Log files
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Environment variables file
+.env
+
+# Optional: build directory (si tienes uno, como dist)
+/dist
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+.sublime-project
+.sublime-workspace
