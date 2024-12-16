@@ -12,6 +12,7 @@ yarn-error.log
 # Optional: build directory (si tienes uno, como dist)
 /dist
 
+# files route
 uploads/
 
 # OS generated files

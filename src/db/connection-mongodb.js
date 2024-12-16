@@ -1,4 +1,4 @@
-//Conexion a la base de datos auth-server en mongoDB
+//Conexion a la base de datos files-db en mongoDB
 
 const mongoose = require("mongoose");
 

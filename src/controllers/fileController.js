@@ -41,7 +41,6 @@ exports.getFile = async (req, res) => {
       return res.status(404).json({ message: 'Archivo no encontrado' });
     }
 
-
     res.status(200).json(file);
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener el archivo', error });
@@ -75,7 +74,7 @@ exports.getAllFiles = async (req, res) => {
     // Buscar todos los archivos en la base de datos
     const files = await File.find();
 
-    // Si no hay archivos, devolver un mensaje adecuado
+    // Si no hay archivos, devolver un mensaje
     if (files.length === 0) {
       return res.status(404).json({ message: 'No se encontraron archivos' });
     }
