@@ -1,4 +1,6 @@
-const file = require("../models/fileModel");
+const File = require("../models/fileModel");
+const path = require('path');
+const fs = require('fs').promises;
 
 exports.uploadFile = async (req, res) => {
   // Verificamos si el archivo fue cargado correctamente
@@ -15,6 +17,7 @@ exports.uploadFile = async (req, res) => {
       fileSize: req.file.size,
       fileType: req.file.mimetype,
     });
+    console.log('de', newFile)
 
     await newFile.save();
     res
@@ -30,19 +33,37 @@ exports.uploadFile = async (req, res) => {
   }
 };
 
-exports.getFile = async(req, res) => {
+exports.getFile = async (req, res) => {
+  try {
+    const file = await File.findById(req.params.id);
+    console.log(file)
+    if (!file) {
+      return res.status(404).json({ message: 'Archivo no encontrado' });
+    }
+
+
+    res.status(200).json(file);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener el archivo', error });
+  }
+}
+
+exports.downloadFile = async (req, res) => {
   try {
     const file = await File.findById(req.params.id);
     if (!file) {
       return res.status(404).json({ message: 'Archivo no encontrado' });
     }
 
-    // Enviar el archivo para que el navegador lo muestre
-    res.sendFile(file.filePath, (err) => {
+    // Enviar el archivo como descarga
+    res.download(file.filePath, file.originalName, (err) => {
       if (err) {
-        return res.status(500).json({ message: 'Error al mostrar el archivo', error: err });
+        console.log('Error al enviar el archivo')
+        if (!res.headersSent) {
+          return res.status(500).json({ message: 'Error al mostrar el archivo', error: err });
+        }
       }
-    });
+    })
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener el archivo', error });
   }
@@ -68,19 +89,25 @@ exports.getAllFiles = async (req, res) => {
 };
 
 
-exports.deleteFile = async(req, res) => {
+exports.deleteFile = async (req, res) => {
   try {
     const file = await File.findById(req.params.id);
+    console.log('fileDelete', file)
     if (!file) {
       return res.status(404).json({ message: 'Archivo no encontrado' });
     }
+    const filePath = path.resolve(file.filePath);
 
     // Eliminar el archivo del sistema de archivos
-    fs.unlinkSync(file.filePath);
+    await fs.unlink(filePath);
 
     // Eliminar el registro de la base de datos
-    await file.remove();
+    const deletedFile = await File.findByIdAndDelete(req.params.id);
+    if (!deletedFile) {
+      return res.status(500).json({ message: 'Error al eliminar el archivo de la base de datos' });
+    }
     res.status(200).json({ message: 'Archivo eliminado con éxito' });
+
   } catch (error) {
     res.status(500).json({ message: 'Error al eliminar el archivo', error });
   }
