@@ -12,6 +12,8 @@ yarn-error.log
 # Optional: build directory (si tienes uno, como dist)
 /dist
 
+uploads/
+
 # OS generated files
 .DS_Store
 Thumbs.db
