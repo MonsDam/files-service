@@ -1,28 +1,57 @@
+const combineChunks = require("../helpers/combineChunks");
 const File = require("../models/fileModel");
 const path = require('path');
 const fs = require('fs').promises;
 
 exports.uploadFile = async (req, res) => {
-  // Verificamos si el archivo fue cargado correctamente
+  console.log(req.file)
   if (!req.file) {
     return res.status(400).json({ message: "No se ha cargado ningún archivo" });
   }
 
-  // Crear un registro en la base de datos con los metadatos del archivo
-  try {
-    const newFile = new File({
-      originalName: req.file.originalname,
-      fileName: req.file.filename,
-      filePath: req.file.path,
-      fileSize: req.file.size,
-      fileType: req.file.mimetype,
-    });
-    console.log('de', newFile)
+  const { originalName, fileName, totalChunks, chunkIndex } = req.body;
 
-    await newFile.save();
-    res
-      .status(200)
-      .json({ message: "Archivo subido con éxito", file: newFile });
+  try {
+    let fileRecord = await File.findOne({ fileName });
+
+    if (!fileRecord) {
+
+      fileRecord = new File({
+        originalName,
+        fileName,
+        totalChunks,
+        uploadedChunks: 0,
+        fileSize: 0,
+        fileType: req.file.mimetype,
+        isComplete: false,
+      });
+
+      await fileRecord.save();
+    }
+
+    // Guardamos el chunk en la carpeta de uploads
+    const chunkPath = path.join(__dirname, 'uploads', `${fileName}_chunk_${chunkIndex}`);
+    await fs.promises.writeFile(chunkPath, req.file.buffer);
+
+    // Actualizamos el número de chunks subidos en la base de datos
+    fileRecord.uploadedChunks += 1;
+
+    if (fileRecord.uploadedChunks === totalChunks) {
+      fileRecord.isComplete = true;
+
+      // Combinamos los chunks en un archivo final
+      const finalFilePath = path.join(__dirname, 'uploads', fileName);
+      await combineChunks(fileName, totalChunks, finalFilePath);
+
+      fileRecord.filePath = finalFilePath;
+      fileRecord.fileSize = fs.statSync(finalFilePath).size;
+    }
+
+    await fileRecord.save();
+
+    res.status(200).json({ message: "Chunk subido exitosamente", uploadedChunks: fileRecord.uploadedChunks });
+
+
   } catch (error) {
     res
       .status(500)

@@ -5,6 +5,7 @@ const path = require('path');
 // Configuración de Multer para el almacenamiento de archivos
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
+    console.log('first')
     // Valida que la carpeta de destino exista
     const dir = 'uploads';
     if (!fs.existsSync(dir)) {
@@ -13,8 +14,9 @@ const storage = multer.diskStorage({
     cb(null, dir); // Carpeta 'uploads' donde se guardarán los archivos
   },
   filename: (req, file, cb) => {
-    // Nombrar el archivo con un timestamp para evitar conflictos
-    cb(null, Date.now() + path.extname(file.originalname)); // Nombre único para cada archivo
+    console.log(req)
+    const { fileName, chunkIndex } = req.body;
+    cb(null, `${fileName}_chunk_${chunkIndex}${path.extname(file.originalname)}`); // Nombre único para cada archivo
   }
 });
 
@@ -22,6 +24,6 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage: storage,
   limits: { fileSize: 3 * 1024 * 1024 * 1024 } // 3GB en bytes
-}).single('file');
+}).none();
 
 module.exports = upload;
