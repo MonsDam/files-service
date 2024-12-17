@@ -1,7 +1,7 @@
-const combineChunks = require("../helpers/combineChunks");
 const File = require("../models/fileModel");
 const path = require("path");
-const fs = require("fs").promises;
+const fs = require("fs");
+const fsPromises = require("fs").promises;
 
 exports.uploadFile = async (req, res) => {
   console.log("file", req.file);
@@ -35,9 +35,9 @@ exports.uploadFile = async (req, res) => {
 
     // Verificar si la carpeta 'temp' existe, si no, crearla
     try {
-      await fs.access(tempDir); // Verifica si existe
+      await fsPromises.access(tempDir); // Verifica si existe
     } catch (error) {
-      await fs.mkdir(tempDir, { recursive: true }); // Crea la carpeta si no existe
+      await fsPromises.mkdir(tempDir, { recursive: true }); // Crea la carpeta si no existe
       console.log("Carpeta temporal creada.");
     }
 
@@ -46,14 +46,14 @@ exports.uploadFile = async (req, res) => {
     if (!req.file || !req.file.buffer) {
       return res.status(400).json({ message: 'El archivo está vacío o no se ha recibido correctamente.' });
     }
-    await fs.writeFile(chunkPath, req.file.buffer); 
+    await fsPromises.writeFile(chunkPath, req.file.buffer);
 
     // Actualizar progreso en la base de datos
-    try{
+    try {
       fileRecord.uploadedChunks += 1;
       await fileRecord.save();
 
-    } catch(err) {
+    } catch (err) {
       console.log(err)
       return;
     }
@@ -65,25 +65,31 @@ exports.uploadFile = async (req, res) => {
     if (fileRecord.uploadedChunks === parseInt(totalChunks)) {
       const finalFilePath = path.join("uploads", fileName);
       console.log(finalFilePath)
-      const writeStream = fs.createWriteStream(finalFilePath);
 
+      const writeStream = fs.createWriteStream(finalFilePath);
+      console.log(writeStream)
+
+      console.log('ggggg')
       for (let i = 0; i < totalChunks; i++) {
         const currentChunkPath = path.join(tempDir, `${fileName}_chunk_${i}`);
+        console.log(currentChunkPath)
         const chunk = fs.readFileSync(currentChunkPath);
+        console.log(chunk);
         writeStream.write(chunk);
-        fs.unlinkSync(currentChunkPath); // Eliminar chunk después de ensamblarlo
+        await fsPromises.unlink(currentChunkPath); // Eliminar chunk después de ensamblarlo
       }
 
+      console.log('pasandoooo')
       writeStream.end();
 
       // Actualizar estado en la base de datos
       fileRecord.isComplete = true;
       fileRecord.fileSize = fs.statSync(finalFilePath).size;
       console.log('fileRecord.fileSize', fileRecord.fileSize)
-      try{
+      try {
         await fileRecord.save();
 
-      } catch(err){
+      } catch (err) {
         console.log(err);
         return;
       }
@@ -173,7 +179,7 @@ exports.deleteFile = async (req, res) => {
     const filePath = path.resolve(file.filePath);
 
     // Eliminar el archivo del sistema de archivos
-    await fs.unlink(filePath);
+    await fsPromises.unlink(filePath);
 
     // Eliminar el registro de la base de datos
     const deletedFile = await File.findByIdAndDelete(req.params.id);
