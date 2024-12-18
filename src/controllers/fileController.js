@@ -24,6 +24,7 @@ exports.uploadFile = async (req, res) => {
         uploadedChunks: 0,
         fileSize: 0, // Se actualizará al final
         fileType: req.file.mimetype,
+        filePath: '',
         isComplete: false,
       });
       await fileRecord.save();
@@ -85,6 +86,7 @@ exports.uploadFile = async (req, res) => {
       // Actualizar estado en la base de datos
       fileRecord.isComplete = true;
       fileRecord.fileSize = fs.statSync(finalFilePath).size;
+      fileRecord.filePath = finalFilePath;
       console.log('fileRecord.fileSize', fileRecord.fileSize)
       try {
         await fileRecord.save();
@@ -176,13 +178,16 @@ exports.deleteFile = async (req, res) => {
     if (!file) {
       return res.status(404).json({ message: "Archivo no encontrado" });
     }
+    console.log(file.filePath)
     const filePath = path.resolve(file.filePath);
-
+    console.log(filePath)
     // Eliminar el archivo del sistema de archivos
     await fsPromises.unlink(filePath);
 
+
     // Eliminar el registro de la base de datos
     const deletedFile = await File.findByIdAndDelete(req.params.id);
+    console.log(deletedFile)
     if (!deletedFile) {
       return res
         .status(500)

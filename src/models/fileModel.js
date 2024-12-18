@@ -8,6 +8,7 @@ const fileSchema = new mongoose.Schema({
   isComplete: { type: Boolean, default: false },
   fileSize: { type: Number, default: 0 },
   fileType: { type: String },
+  filePath: { type: String },
   uploadedAt: { type: Date, default: Date.now },
 });
 
