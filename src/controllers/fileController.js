@@ -1,8 +1,20 @@
+/**
+ * @module fileController
+ * @description Controlador para la gestión de archivos, que incluye la carga, descarga, obtención y eliminación de archivos.
+ */
+
 const File = require("../models/fileModel");
 const path = require("path");
 const fs = require("fs");
 const fsPromises = require("fs").promises;
 
+/**
+ * @function uploadFile
+ * @description Maneja la carga de archivos divididos en chunks, almacenándolos temporalmente y ensamblándolos una vez todos los chunks se suban.
+ * @param {Object} req - Objeto de solicitud de Express.
+ * @param {Object} res - Objeto de respuesta de Express.
+ * @returns {Object} Respuesta indicando si la carga o ensamblaje del archivo fue exitoso o si hubo un error.
+ */
 exports.uploadFile = async (req, res) => {
   console.log("file", req.file);
   if (!req.file) {
@@ -115,6 +127,13 @@ exports.uploadFile = async (req, res) => {
   }
 };
 
+/**
+ * @function getFile
+ * @description Obtiene los detalles de un archivo a partir de su ID.
+ * @param {Object} req - Objeto de solicitud de Express.
+ * @param {Object} res - Objeto de respuesta de Express.
+ * @returns {Object} Respuesta con la información del archivo o error si no se encuentra.
+ */
 exports.getFile = async (req, res) => {
   try {
     const file = await File.findById(req.params.id);
@@ -129,6 +148,13 @@ exports.getFile = async (req, res) => {
   }
 };
 
+/**
+ * @function downloadFile
+ * @description Permite la descarga de un archivo a partir de su ID.
+ * @param {Object} req - Objeto de solicitud de Express.
+ * @param {Object} res - Objeto de respuesta de Express.
+ * @returns {Object} Respuesta con el archivo descargado o error si no se encuentra.
+ */
 exports.downloadFile = async (req, res) => {
   try {
     const file = await File.findById(req.params.id);
@@ -152,7 +178,13 @@ exports.downloadFile = async (req, res) => {
   }
 };
 
-// Función para obtener todos los archivos
+/**
+ * @function getAllFiles
+ * @description Obtiene todos los archivos almacenados en la base de datos.
+ * @param {Object} req - Objeto de solicitud de Express.
+ * @param {Object} res - Objeto de respuesta de Express.
+ * @returns {Array} Lista de archivos o mensaje de error si no se encuentran.
+ */
 exports.getAllFiles = async (req, res) => {
   try {
     // Buscar todos los archivos en la base de datos
@@ -171,6 +203,13 @@ exports.getAllFiles = async (req, res) => {
   }
 };
 
+/**
+ * @function deleteFile
+ * @description Elimina un archivo tanto del sistema de archivos como de la base de datos.
+ * @param {Object} req - Objeto de solicitud de Express.
+ * @param {Object} res - Objeto de respuesta de Express.
+ * @returns {Object} Respuesta indicando si la eliminación fue exitosa o si hubo un error.
+ */
 exports.deleteFile = async (req, res) => {
   try {
     const file = await File.findById(req.params.id);
@@ -183,7 +222,6 @@ exports.deleteFile = async (req, res) => {
     console.log(filePath)
     // Eliminar el archivo del sistema de archivos
     await fsPromises.unlink(filePath);
-
 
     // Eliminar el registro de la base de datos
     const deletedFile = await File.findByIdAndDelete(req.params.id);
